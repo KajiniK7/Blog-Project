@@ -1,233 +1,188 @@
-# 🖋️ LuxBlog — AI-Moderated Publishing Platform
+BlogHub — AI-Moderated Publishing Platform
+BlogHub is a full-stack blogging platform inspired by Medium. It is built using FastAPI, React (Vite), and Turso/libSQL or SQLite, with Groq AI for content moderation. Users can write and publish articles, save drafts, search stories, switch between dark and light themes, and view analytics about their posts.
 
-A modern, full-stack Medium-style blogging platform built with **FastAPI**, **React (Vite)**, **Turso / libSQL / SQLite**, and real-time **Groq AI Content Moderation**. Features an obsidian-and-warm-gold luxury aesthetic, dark/light theme switching, live title search, draft-only edit workflows, user-scoped privacy, and interactive real-time story analytics charts.
+✨ Features
+- AI Content Moderation: Uses Groq AI to review submitted articles based on content length, profanity, tone, and safety guidelines.
+- User Authentication: Users can register and log in. Passwords are stored securely using PBKDF2 hashing.
+- User Privacy: Each author can manage their own stories. Drafts and flagged articles are private, while published articles are visible to everyone.
+- Story Analytics: Displays the user's Draft, Flagged, Approved, and Published stories in a chart that updates automatically.
+- Dark and Light Mode: Users can switch between a dark obsidian-and-gold theme and a light theme.
+- Live Search: Search for articles by title using the search bar.
+- Post Filters: Browse articles using the For You, Published, Approved, Flagged, and Drafts tabs.
+- Draft Editing: Articles can be edited only while they are in draft status.
+- Author and Timestamp: Each article displays the author's username and its creation date and time.
+- Database Support: Supports both a cloud-based Turso/libSQL database and a local SQLite database.
 
----
+📋 Prerequisites
+Before running the project, make sure you have installed the following:
+1. Python 3.10 or later: Download Python
+2. Node.js 18 or later and npm: Download Node.js
+3. Groq API key: Get an API key — optional if you do not want to configure AI moderation.
 
-## ✨ Features
-
-- **🛡️ Real-Time Groq AI Moderation**: Automated post analysis to evaluate, approve, or flag articles based on safety and quality guidelines (length, profanity, and tone).
-- **🔐 User Authentication**: Register and log in with persistent user accounts stored securely with PBKDF2 password hashing.
-- **👤 Multi-User Ownership & Privacy**:
-  - Each author owns and creates stories under their unique `@username`.
-  - **Flagged and draft articles are private**: Only visible to the author who created them.
-  - **Universal published articles**: Any article published by an author can be read by all platform visitors.
-- **📊 Real-Time User Analytics Chart**: A dedicated visual widget beneath the sidebar guidelines providing a single proportional stacked bar chart and interactive metrics for the user's Drafts, Flagged, Approved, and Published stories with a live sync indicator.
-- **🎨 Luxury Dark / Light Mode**: Obsidian & warm gold color palette inspired by high-end editorial magazines with an instant theme toggle.
-- **🔍 Live Search**: Search and filter articles dynamically by title right from the top navigation bar.
-- **📑 Status Filters**: Filter posts across 5 tabs: **For you**, **Published**, **Approved**, **Flagged**, and **Drafts**.
-- **✏️ Strict Draft-Only Editing**: Edit options are strictly enabled only when an article is in `draft` status, locking down approved and published content.
-- **⏱️ Timestamp & Author Tag**: Formatted creation date and time (`Oct 14 at 8:27 PM`) with personalized author attribution (`@username`).
-- **☁️ Cloud & Local Database Support**: Plug-and-play support for remote **Turso libSQL cloud** or local **SQLite** (`posts.db`).
-
----
-
-## 📋 Prerequisites
-
-Ensure you have the following installed on your machine:
-
-1. **Python 3.10+** — [Download Python](https://www.python.org/downloads/) *(Make sure to check "Add Python to PATH" during installation)*
-2. **Node.js 18+ & npm** — [Download Node.js](https://nodejs.org/)
-3. **Groq API Key** *(Optional for AI moderation)* — [Get an API Key](https://console.groq.com/)
-
----
-
-## ⚡ Option 1: Quick 1-Click Setup & Launch (Windows)
-
-If you are on Windows, you can use the pre-configured batch scripts:
-
-### Step 1: Initial Setup
-Double-click `setupdev.bat` or run it from the command line:
-```cmd
+⚡ Option 1: Quick Setup on Windows
+The project includes batch scripts to simplify installation and execution.
+Step 1: Install dependencies
+Double-click setupdev.bat or run the following command from the project directory:
 setupdev.bat
-```
-*This automatically creates the Python virtual environment, installs backend dependencies and moderation SDK, executes database migrations, and installs frontend npm packages.*
 
-### Step 2: Start the Application
-Double-click `runapplication.bat` or run:
-```cmd
+
+This script creates the Python virtual environment, installs the backend dependencies and moderation SDK, runs database migrations, and installs the frontend packages.
+Step 2: Start the application
+Double-click runapplication.bat or run:
 runapplication.bat
-```
-*This opens both the FastAPI backend and React frontend in separate terminal windows.*
 
----
 
-## 🛠️ Option 2: Manual Installation & Execution (Step-by-Step)
+This starts the FastAPI backend and React frontend in separate terminal windows.
 
-If you prefer to run each step manually or are on macOS/Linux:
+🛠️ Option 2: Manual Installation
+Use these steps if you prefer to start the backend and frontend separately or are using macOS or Linux.
+1. Configure environment variables
+Create a .env file in the root project directory.
+On Windows:
+copy .env.example .env
 
-### 1. Environment Configuration
 
-Create a `.env` file in the root project directory:
-```bash
-# Copy example file
-copy .env.example .env   # On Windows
-# or: cp .env.example .env # On Linux/macOS
-```
+On Linux or macOS:
+cp .env.example .env
 
-Open `.env` and fill in your keys:
-```ini
+
+Open the .env file and add your configuration:
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=openai/gpt-oss-safeguard-20b
 
-# Optional: To connect to Turso Cloud (leave empty or omit to use local SQLite posts.db)
+# Optional: Turso cloud database configuration
 TURSO_DATABASE_URL=libsql://your-db-name.turso.io
 TURSO_AUTH_TOKEN=your-turso-auth-token
-```
 
----
 
-### 2. Backend Setup & Run
+If you want to use the local SQLite database, you can leave the Turso settings empty or omit them.
+2. Set up and run the backend
+Open a terminal in the project directory:
+cd Blog
 
-1. **Open a terminal** and navigate to the project root:
-   ```bash
-   cd Blog
-   ```
 
-2. **Create a virtual environment**:
-   ```bash
-   python -m venv env
-   ```
+Create a Python virtual environment:
+python -m venv env
 
-3. **Activate the virtual environment**:
-   - **Windows (Command Prompt / PowerShell)**:
-     ```cmd
-     env\Scripts\activate
-     ```
-   - **Linux / macOS**:
-     ```bash
-     source env/bin/activate
-     ```
 
-4. **Install Python packages**:
-   ```bash
-   pip install -r requirements.txt
-   pip install ./moderation_sdk
-   ```
+Activate the environment.
+On Windows:
+env\Scripts\activate
 
-5. **Run Database Migrations**:
-   ```bash
-   alembic upgrade head
-   ```
 
-6. **Start the FastAPI Server**:
-   ```bash
-   python main.py
-   ```
-   *The backend will now be live at:* `http://localhost:8000`
+On Linux or macOS:
+source env/bin/activate
 
----
 
-### 3. Frontend Setup & Run
+Install the required packages:
+pip install -r requirements.txt
+pip install ./moderation_sdk
 
-1. **Open a second terminal** and navigate to the `frontend` folder:
-   ```bash
-   cd Blog/frontend
-   ```
 
-2. **Install Node.js dependencies**:
-   ```bash
-   npm install
-   ```
+Run the database migrations:
+alembic upgrade head
 
-3. **Start the Vite development server**:
-   ```bash
-   npm start
-   ```
-   *(or `npm run dev`)*
 
-   *The frontend will now be accessible at:* `http://localhost:3000`
+Start the FastAPI server:
+python main.py
 
----
 
-## 🌐 Application URLs
+The backend will be available at http://localhost:8000.
+3. Set up and run the frontend
+Open a second terminal and navigate to the frontend directory:
+cd Blog/frontend
 
-| Service | URL | Description |
-| :--- | :--- | :--- |
-| **Frontend Application** | [http://localhost:3000](http://localhost:3000) | Main blog UI, reader view, analytics chart, and editor |
-| **FastAPI Backend** | [http://localhost:8000](http://localhost:8000) | REST API server |
-| **Interactive API Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | Swagger UI for testing API endpoints |
-| **Alternative API Docs** | [http://localhost:8000/redoc](http://localhost:8000/redoc) | ReDoc API documentation |
 
----
+Install the frontend dependencies:
+npm install
 
-## 📖 How to Use the Application
 
-1. **Sign In / Register**:
-   - When you first visit `http://localhost:3000`, click **Sign In** or **Get Started** in the top-right header or on the welcome card.
-   - Switch to **Create account**, pick a username and password, and click **Create account**.
-   - You are immediately logged in, and your username appears in the header.
+Start the Vite development server:
+npm start
 
-2. **Write a Story**:
-   - Click the **Write** button in the header.
-   - Enter your title, content, and an optional image URL.
-   - Stories are created with your `@username` attached as the author.
-   - Choose **Save Draft** to store it privately, or **Submit for Review** to trigger the Groq AI moderation workflow.
 
-3. **Multi-User Privacy Rules**:
-   - **Drafts & Flagged Stories**: Strictly private. When user `alice` logs in, she only sees her own flagged or drafted stories. User `bob` will never see `alice`'s flagged content.
-   - **Published Stories**: Fully public. Once an approved story is published, it appears on the global feed for everyone to read.
+Alternatively, use:
+npm run dev
 
-4. **Live User Story Analytics Chart**:
-   - Located directly below the **Publishing Guidelines** in the right-hand sidebar.
-   - View your own stories broken down across **Published**, **Approved**, **Draft**, and **Flagged** on a proportional horizontal chart.
-   - Click any status card in the widget to filter your feed instantly.
-   - Real-time updates poll automatically every 5 seconds with a live green indicator and sync timestamp.
 
-5. **Edit a Draft**:
-   - Go to the **Drafts** tab in the filter bar.
-   - On any draft card, click the **✏️ Edit** button to load the article back into the composer.
-   - *(Note: Once an article is Approved or Published, editing is locked to preserve moderation integrity).*
+The frontend will be available at http://localhost:3000.
 
-6. **Search Articles**:
-   - Type in the **Search stories...** bar at the top to filter cards live by title.
+🌐 Application URLs
+Service	URL	Purpose
+Frontend	http://localhost:3000	Main blogging interface
+Backend	http://localhost:8000	FastAPI server
+Swagger API Docs	http://localhost:8000/docs	Test API endpoints
+ReDoc API Docs	http://localhost:8000/redoc	View API documentation
 
-7. **Toggle Theme**:
-   - Click the **☀️ / 🌙** button in the top bar to toggle between obsidian luxury dark mode and clean paper light mode.
+📖 How to Use the Application
+1. Register or sign in
+Open http://localhost:3000 and click Sign In or Get Started. Choose the account creation option, enter a username and password, and create your account. After registration, you will be logged in and your username will appear in the header.
+2. Write a story
+Click the Write button in the header. Enter your article title, content, and an optional image URL.
+You can choose between two options:
+- Save Draft: Saves the article privately so you can continue working on it later.
+- Submit for Review: Sends the article through the Groq AI moderation workflow.
+Each article is associated with the username of its author.
+3. Understand the privacy rules
+Drafts and flagged articles are visible only to their authors. For example, if Alice creates a draft, Bob cannot see it from his account.
+Once an article is approved and published, it becomes available for everyone to read through the public feed.
+4. View story analytics
+The analytics chart is located below the publishing guidelines in the right-hand sidebar.
+It displays the number of your stories in four categories:
+- Published
+- Approved
+- Draft
+- Flagged
+Click a status card to filter the feed by that category. The chart refreshes automatically every five seconds and displays a sync indicator and timestamp.
+5. Edit a draft
+Open the Drafts tab and click the Edit button on the article you want to update. The article will reopen in the editor.
+Editing is disabled for approved and published articles to maintain the moderation workflow.
+6. Search for articles
+Use the Search stories... field in the top navigation bar to filter articles by title.
+7. Change the theme
+Click the sun or moon button in the top bar to switch between dark and light mode.
 
----
-
-## 📂 Project Architecture
-
-```
+📂 Project Structure
+The project is organized into separate backend, frontend, database migration, and moderation modules.
 Blog/
-├── alembic/                # Database migrations
-├── app/                    # Backend application core
-│   ├── auth_service.py     # Password hashing & user auth helpers
-│   ├── crud.py             # Database CRUD queries & user privacy scoping
-│   ├── database.py         # SQLAlchemy engine & Turso/libSQL connection
-│   ├── main_app.py         # FastAPI application entry & CORS
-│   ├── models.py           # Database models (Post, User)
-│   ├── schemas.py          # Pydantic validation schemas
-│   └── routers/            # API endpoints (posts, auth, moderation)
-├── frontend/               # React + Vite frontend
+├── alembic/                    # Database migrations
+├── app/                        # Backend application
+│   ├── auth_service.py         # Password hashing and authentication
+│   ├── crud.py                 # Database operations and privacy rules
+│   ├── database.py             # Database connection and configuration
+│   ├── main_app.py             # FastAPI application and CORS
+│   ├── models.py               # User and Post database models
+│   ├── schemas.py              # Pydantic validation schemas
+│   └── routers/                # Post, authentication, and moderation APIs
+├── frontend/                   # React and Vite frontend
 │   ├── src/
-│   │   ├── components/     # UI components (PostCard, UserPostAnalytics, AuthModal, etc.)
-│   │   ├── App.jsx         # Main application container & state
-│   │   └── index.css       # Luxury Obsidian theme & chart styles
-│   ├── package.json        # Frontend dependencies
-│   └── vite.config.js      # Vite build configuration
-├── moderation_sdk/         # Groq AI moderation client package
-├── runapplication.bat      # 1-Click launcher script for Windows
-├── setupdev.bat            # 1-Click setup script for Windows
-├── requirements.txt        # Python package dependencies
-└── README.md               # Project documentation
-```
+│   │   ├── components/         # Reusable UI components
+│   │   ├── App.jsx             # Main application and state
+│   │   └── index.css           # Theme and chart styling
+│   ├── package.json            # Frontend dependencies
+│   └── vite.config.js          # Vite configuration
+├── moderation_sdk/             # Groq AI moderation client
+├── runapplication.bat          # Starts the application on Windows
+├── setupdev.bat                # Installs project dependencies
+├── requirements.txt            # Python dependencies
+└── README.md                   # Project documentation
 
----
 
-## 🧪 Testing & Verification
 
-To run backend test suites:
-```bash
-# Make sure the virtual environment is activated
+🧪 Testing
+To run the backend test suite, activate the Python virtual environment and execute:
 pytest
-```
-To run targeted privacy & author scoping tests:
-```bash
+
+
+To run tests related to privacy and author-specific access:
 pytest -k "privacy or author"
-```
-To run Groq connection smoke tests:
-```bash
+
+
+To check the Groq API connection:
 python groq_smoke.py
-```
+
+
+These commands help verify the backend functionality, privacy rules, and Groq integration.
+
+📝 Project Summary
+BlogHub is a full-stack blogging application that combines article publishing with AI-based content moderation. It allows users to create accounts, write stories, manage drafts, and publish approved content while keeping private articles accessible only to their authors. With its React interface, FastAPI backend, database options, and story analytics, the project brings together content management, privacy, and AI moderation in one application.
