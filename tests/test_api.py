@@ -465,8 +465,8 @@ def test_flagged_posts_privacy_scoping(client):
     assert len(res_charlie.json()) == 0
 
 
-def test_published_posts_visible_to_all_users(client):
-    """Published posts can be seen and read by any user, regardless of author."""
+def test_published_posts_scoped_to_account_user(client):
+    """When filtering by published with current_user, only that user's published posts are returned."""
     # Alice creates, approves, and publishes a post
     p_alice = client.post(
         "/posts/",
@@ -479,10 +479,29 @@ def test_published_posts_visible_to_all_users(client):
     client.post(f"/posts/{p_alice}/submit/")
     client.patch(f"/posts/{p_alice}/publish/")
 
-    # Bob lists published posts -> alice's published post is visible
+    # Alice lists published posts -> alice's published post is visible
+    res_alice = client.get("/posts/?status=published&current_user=alice")
+    assert res_alice.status_code == 200
+    ids_alice = [p["id"] for p in res_alice.json()]
+    assert p_alice in ids_alice
+    assert res_alice.json()[0]["author_username"] == "alice"
+
+    # Bob lists published posts -> alice's post is NOT returned (only bob's published posts are shown)
     res_bob = client.get("/posts/?status=published&current_user=bob")
     assert res_bob.status_code == 200
     ids_bob = [p["id"] for p in res_bob.json()]
-    assert p_alice in ids_bob
-    assert res_bob.json()[0]["author_username"] == "alice"
+    assert p_alice not in ids_bob
+    assert len(ids_bob) == 0
+
+    # Public/unscoped query without current_user lists all published posts
+    res_unscoped = client.get("/posts/?status=published")
+    assert res_unscoped.status_code == 200
+    ids_unscoped = [p["id"] for p in res_unscoped.json()]
+    assert p_alice in ids_unscoped
+
+    # Bob's general feed (/posts/) shows Alice's published post
+    res_bob_feed = client.get("/posts/?current_user=bob")
+    assert res_bob_feed.status_code == 200
+    ids_feed = [p["id"] for p in res_bob_feed.json()]
+    assert p_alice in ids_feed
 

@@ -169,7 +169,7 @@ def list_posts(
     """Retrieve all posts ordered newest first (ID descending).
 
     Supports optional status filtering against allowed statuses.
-    Enforces privacy: flagged & draft posts are scoped to the current_user.
+    Enforces privacy and scoping: status-filtered queries are scoped to the current_user when provided.
     """
     posts = crud.get_posts(db, status=status_filter, current_user=current_user)
     return [PostResponse.model_validate(p) for p in posts]

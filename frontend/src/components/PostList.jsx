@@ -65,6 +65,7 @@ export default function PostList({
     const getEmptyHeadline = () => {
       if (currentFilter === 'all') return 'No stories from other writers yet';
       if (currentFilter === 'my_posts') return "You haven't created any posts yet";
+      if (currentFilter === 'published') return "You don't have any published stories yet";
       return `No ${currentFilter} stories yet`;
     };
 
@@ -74,6 +75,9 @@ export default function PostList({
       }
       if (currentFilter === 'my_posts') {
         return 'Start writing to build your personal catalog of drafts and published articles.';
+      }
+      if (currentFilter === 'published') {
+        return 'Stories you publish will appear here in your published catalog.';
       }
       return `There are currently no articles in the "${currentFilter}" category.`;
     };

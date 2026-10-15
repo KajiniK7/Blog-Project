@@ -59,7 +59,10 @@ def get_posts(
             else:
                 query = query.filter(Post.status == "approved")
         elif status == "published":
-            query = query.filter(Post.status == "published")
+            if normalized_user:
+                query = query.filter(Post.status == "published", Post.author_username == normalized_user)
+            else:
+                query = query.filter(Post.status == "published")
         else:
             query = query.filter(Post.status == status)
     else:

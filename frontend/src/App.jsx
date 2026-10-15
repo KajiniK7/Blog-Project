@@ -157,13 +157,23 @@ export default function App() {
       }
 
       if (statCounts[p.status] !== undefined) {
-        statCounts[p.status] += 1;
+        if (p.status === 'published') {
+          if (currentUsername) {
+            if (isMine) {
+              statCounts.published += 1;
+            }
+          } else {
+            statCounts.published += 1;
+          }
+        } else {
+          statCounts[p.status] += 1;
+        }
       }
     });
     return statCounts;
   }, [allPostsForStats, currentUser]);
 
-  // Filter posts based on current tab ('all' = others' posts, 'my_posts' = user's posts) and searchQuery
+  // Filter posts based on current tab ('all' = others' posts, 'my_posts' = user's posts, 'published' = user's published posts) and searchQuery
   const displayedPosts = useMemo(() => {
     const currentUsername = (currentUser?.username || '').trim().toLowerCase();
 
@@ -178,6 +188,12 @@ export default function App() {
     } else if (currentFilter === 'my_posts') {
       // "My Posts" tab shows all posts by the logged-in user
       filtered = allPostsForStats.filter((post) => {
+        const author = (post.author_username || post.username || '').trim().toLowerCase();
+        return currentUsername && author === currentUsername;
+      });
+    } else if (currentFilter === 'published' && currentUsername) {
+      // "Published" tab shows only that account user's published posts
+      filtered = posts.filter((post) => {
         const author = (post.author_username || post.username || '').trim().toLowerCase();
         return currentUsername && author === currentUsername;
       });
