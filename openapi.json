@@ -1,0 +1,595 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI-Assisted Content Moderation & Publishing API",
+    "description": "Backend API for managing posts, AI-assisted content moderation, and editorial publishing workflow.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/posts/": {
+      "post": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "Create a new draft post",
+        "description": "Create a new post in draft status.\n\nTitle must be 1-200 non-blank characters. Content can be up to 10,000 characters.\nModeration length rules (50-2000 chars) are enforced at submit time.",
+        "operationId": "create_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "List all posts",
+        "description": "Retrieve all posts ordered newest first (ID descending).\n\nSupports optional status filtering against allowed statuses.",
+        "operationId": "list_posts",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "draft",
+                    "flagged",
+                    "approved",
+                    "published"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter posts by status (draft, flagged, approved, published)",
+              "title": "Status"
+            },
+            "description": "Filter posts by status (draft, flagged, approved, published)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostResponse"
+                  },
+                  "title": "Response List Posts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{post_id}": {
+      "put": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "Update an existing post",
+        "description": "Update post title and/or content.\n\nResets post status back to 'draft' and clears flagged reasons.\nPublished posts cannot be edited and return 409 Conflict.",
+        "operationId": "update_post",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Invalid state transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "Get single post by ID",
+        "description": "Retrieve full details of a single post by its ID.",
+        "operationId": "get_post",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{post_id}/submit/": {
+      "post": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "Submit post for AI moderation",
+        "description": "Submit a post for automated AI content moderation.\n\nAllowed only from 'draft' or 'flagged' status (re-submitting a flagged post is allowed).\nEvaluates profanity, content length (50-2000 characters), and AI tone.\nTransitions status to 'approved' or 'flagged'.",
+        "operationId": "submit_post",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Invalid state transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{post_id}/publish/": {
+      "patch": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "Publish an approved post",
+        "description": "Publish an approved post.\n\nOnly posts currently in 'approved' status can be published.\nOnce published, the post becomes read-only and immutable.",
+        "operationId": "publish_post",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Invalid state transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health check",
+        "description": "Health check / root endpoint.",
+        "operationId": "root",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "Error message explanation",
+            "examples": [
+              "Post with id 1 not found."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "description": "Standardized error response body."
+      },
+      "PostCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "description": "Title of the post (1-200 characters, non-blank)",
+            "examples": [
+              "Building Reliable Microservices with FastAPI"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 10000,
+            "title": "Content",
+            "description": "Body content (non-blank, up to 10000 characters at creation)",
+            "examples": [
+              "Here is the full text of the article detailing best practices..."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "title": "PostCreate",
+        "description": "Schema for creating a new post (starts in draft status)."
+      },
+      "PostResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Unique post ID",
+            "examples": [
+              1
+            ]
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Post title",
+            "examples": [
+              "Building Reliable Microservices"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Post body content"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "flagged",
+              "approved",
+              "published"
+            ],
+            "title": "Status",
+            "description": "Current status in moderation lifecycle",
+            "examples": [
+              "draft"
+            ]
+          },
+          "flagged_reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flagged Reasons",
+            "description": "List of moderation violation reasons if flagged, otherwise null",
+            "examples": [
+              [
+                "Banned words detected: idiot"
+              ]
+            ]
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "Post creation timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "content",
+          "status"
+        ],
+        "title": "PostResponse",
+        "description": "Schema representing a post entity."
+      },
+      "PostUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "Updated title (1-200 characters, non-blank)"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "Updated body content (non-blank, up to 10000 characters)"
+          }
+        },
+        "type": "object",
+        "title": "PostUpdate",
+        "description": "Schema for updating an existing post (resets status back to draft)."
+      },
+      "SubmitResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Post ID",
+            "examples": [
+              1
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "flagged"
+            ],
+            "title": "Status",
+            "description": "New post status after moderation evaluation",
+            "examples": [
+              "approved"
+            ]
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "description": "List of moderation violation reasons if flagged (empty if approved)"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable summary of moderation outcome",
+            "examples": [
+              "Post passed moderation and was approved."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "message"
+        ],
+        "title": "SubmitResponse",
+        "description": "Response returned upon submitting a post for AI moderation."
+      }
+    }
+  }
+}
